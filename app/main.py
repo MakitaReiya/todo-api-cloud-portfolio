@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import Literal
 from datetime import datetime
@@ -44,3 +44,38 @@ def create_todo(todo: TodoCreate):
 @app.get("/todos")
 def get_todos():
     return todos
+
+
+@app.get("/todos/{todo_id}")
+def get_todo(todo_id: int):
+    for todo in todos:
+        if todo["id"] == todo_id:
+            return todo
+
+    raise HTTPException(status_code=404, detail="Todo not found")
+
+
+@app.put("/todos/{todo_id}")
+def update_todo(todo_id: int, updated_todo: TodoCreate):
+    for todo in todos:
+        if todo["id"] == todo_id:
+            todo["title"] = updated_todo.title
+            todo["description"] = updated_todo.description
+            todo["status"] = updated_todo.status
+            todo["updated_at"] = datetime.now().isoformat()
+            return todo
+
+    raise HTTPException(status_code=404, detail="Todo not found")
+
+
+@app.delete("/todos/{todo_id}")
+def delete_todo(todo_id: int):
+    for index, todo in enumerate(todos):
+        if todo["id"] == todo_id:
+            deleted_todo = todos.pop(index)
+            return {
+                "message": "Todo deleted",
+                "deleted_todo": deleted_todo
+            }
+
+    raise HTTPException(status_code=404, detail="Todo not found")
