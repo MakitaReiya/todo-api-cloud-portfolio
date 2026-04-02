@@ -1,18 +1,22 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from typing import Literal
 from datetime import datetime
+
+from fastapi import FastAPI, HTTPException, Depends
+from sqlalchemy.orm import Session
+
+from app.database import SessionLocal, engine, Base
+from app import models, schemas
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-todos = []
-next_id = 1
 
-
-class TodoCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=100)
-    description: str = Field(default="", max_length=500)
-    status: Literal["todo", "doing", "done"]
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @app.get("/health")
@@ -20,62 +24,65 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.post("/todos")
-def create_todo(todo: TodoCreate):
-    global next_id
+@app.post("/todos", response_model=schemas.TodoResponse)
+def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
+    new_todo = models.Todo(
+        title=todo.title,
+        description=todo.description,
+        status=todo.status,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
 
-    now = datetime.now().isoformat()
-
-    new_todo = {
-        "id": next_id,
-        "title": todo.title,
-        "description": todo.description,
-        "status": todo.status,
-        "created_at": now,
-        "updated_at": now,
-    }
-
-    todos.append(new_todo)
-    next_id += 1
+    db.add(new_todo)
+    db.commit()
+    db.refresh(new_todo)
 
     return new_todo
 
 
-@app.get("/todos")
-def get_todos():
+@app.get("/todos", response_model=list[schemas.TodoResponse])
+def get_todos(db: Session = Depends(get_db)):
+    todos = db.query(models.Todo).all()
     return todos
 
 
-@app.get("/todos/{todo_id}")
-def get_todo(todo_id: int):
-    for todo in todos:
-        if todo["id"] == todo_id:
-            return todo
+@app.get("/todos/{todo_id}", response_model=schemas.TodoResponse)
+def get_todo(todo_id: int, db: Session = Depends(get_db)):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
 
-    raise HTTPException(status_code=404, detail="Todo not found")
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    return todo
 
 
-@app.put("/todos/{todo_id}")
-def update_todo(todo_id: int, updated_todo: TodoCreate):
-    for todo in todos:
-        if todo["id"] == todo_id:
-            todo["title"] = updated_todo.title
-            todo["description"] = updated_todo.description
-            todo["status"] = updated_todo.status
-            todo["updated_at"] = datetime.now().isoformat()
-            return todo
+@app.put("/todos/{todo_id}", response_model=schemas.TodoResponse)
+def update_todo(todo_id: int, updated_todo: schemas.TodoCreate, db: Session = Depends(get_db)):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
 
-    raise HTTPException(status_code=404, detail="Todo not found")
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    todo.title = updated_todo.title
+    todo.description = updated_todo.description
+    todo.status = updated_todo.status
+    todo.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(todo)
+
+    return todo
 
 
 @app.delete("/todos/{todo_id}")
-def delete_todo(todo_id: int):
-    for index, todo in enumerate(todos):
-        if todo["id"] == todo_id:
-            deleted_todo = todos.pop(index)
-            return {
-                "message": "Todo deleted",
-                "deleted_todo": deleted_todo
-            }
+def delete_todo(todo_id: int, db: Session = Depends(get_db)):
+    todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
 
-    raise HTTPException(status_code=404, detail="Todo not found")
+    if not todo:
+        raise HTTPException(status_code=404, detail="Todo not found")
+
+    db.delete(todo)
+    db.commit()
+
+    return {"message": "Todo deleted"}
