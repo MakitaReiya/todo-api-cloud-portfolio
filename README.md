@@ -57,7 +57,7 @@ FastAPIを用いたTODO管理APIです。
 - [x] TODO更新API (`PUT /todos/{id}`)
 - [x] TODO削除API (`DELETE /todos/{id}`)
 - [x] PostgreSQL連携
-- [ ] Docker化
+- [x] Docker化
 - [ ] AWSデプロイ
 - [ ] Terraform化
 - [ ] CloudWatch監視
