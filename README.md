@@ -58,9 +58,10 @@ FastAPIを用いたTODO管理APIです。
 - [x] TODO削除API (`DELETE /todos/{id}`)
 - [x] PostgreSQL連携
 - [x] Docker化
-- [ ] AWSデプロイ
-- [ ] Terraform化
-- [ ] CloudWatch監視
+- [x] Amazon ECR へのイメージ push
+- [ ] AWS ECS Fargate デプロイ
+- [ ] Terraform 化
+- [ ] CloudWatch / SNS による監視
 - [ ] SNS通知
 
 ## 起動方法
