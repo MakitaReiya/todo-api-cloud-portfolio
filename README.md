@@ -59,7 +59,7 @@ FastAPIを用いたTODO管理APIです。
 - [x] PostgreSQL連携
 - [x] Docker化
 - [x] Amazon ECR へのイメージ push
-- [ ] AWS ECS Fargate デプロイ
+- [x] AWS ECS Fargate デプロイ
 - [ ] Terraform 化
 - [ ] CloudWatch / SNS による監視
 - [ ] SNS通知
