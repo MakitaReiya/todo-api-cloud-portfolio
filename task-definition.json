@@ -1,0 +1,35 @@
+{
+  "family": "todo-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::032146536239:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "todo-app",
+      "image": "032146536239.dkr.ecr.ap-northeast-1.amazonaws.com/todo-api-cloud-portfolio:v1",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DATABASE_URL",
+          "value": "sqlite:///./temp.db"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/todo-api",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
