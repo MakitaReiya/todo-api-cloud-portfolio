@@ -1,9 +1,26 @@
 # Mac
 .DS_Store
+*.DS_Store
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
 # 仮想環境
 venv/
+.venv/
+env/
+
+# Claude Code
+.claude/settings.local.json
+
+# インストーラー / ダウンロードファイル
+*.pkg
+*.dmg
+
+# 環境変数
+.env
+.env.*
+!.env.example
